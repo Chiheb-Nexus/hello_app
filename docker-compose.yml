@@ -1,0 +1,49 @@
+version: '3'
+services:
+  hello_app:
+    build: .
+    image: hello
+    env_file:
+      - conf/dev/.env
+    volumes:
+      - .:/home/hello_app
+      - static_volume:/home/hello_app/hello/static
+      - media_volume:/home/hello_app/hello/media
+    networks:
+      - nginx_network
+      - database1_network
+    depends_on:
+      - database1
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - 8000:80
+    volumes:
+      - ./conf/nginx/conf.d:/etc/nginx/conf.d
+      - static_volume:/home/hello_app/hello/static
+      - media_volume:/home/hello_app/hello/media
+    depends_on:
+      - hello_app
+    networks:
+      - nginx_network
+  
+  database1:
+    image: postgres:latest
+    env_file:
+      - conf/dev/.env
+    networks:
+      - database1_network
+    volumes:
+      - database1_network:/var/lib/postgresql/data
+
+networks:
+  nginx_network:
+    driver: bridge
+  database1_network:
+    driver: bridge
+
+volumes:
+  database1_network:
+  static_volume:
+  media_volume:
